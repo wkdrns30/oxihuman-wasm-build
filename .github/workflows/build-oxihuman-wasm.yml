@@ -1,4 +1,4 @@
-name: Build OxiHuman WASM v0.2.1
+name: Diagnose OxiHuman WASM v0.2.1
 
 on:
   workflow_dispatch:
@@ -24,23 +24,22 @@ jobs:
       - name: Install wasm-pack
         uses: taiki-e/install-action@wasm-pack
 
-      - name: Build browser WASM
+      - name: Build and locate browser WASM
         run: |
           wasm-pack build --release --target web --out-dir demo/pkg crates/oxihuman-wasm \
             --no-default-features --features bindgen
-          test -f crates/oxihuman-wasm/demo/pkg/oxihuman_wasm.js
-          test -f crates/oxihuman-wasm/demo/pkg/oxihuman_wasm_bg.wasm
-          sha256sum crates/oxihuman-wasm/demo/pkg/oxihuman_wasm.js crates/oxihuman-wasm/demo/pkg/oxihuman_wasm_bg.wasm | tee WASM_SHA256.txt
-          wc -c crates/oxihuman-wasm/demo/pkg/oxihuman_wasm.js crates/oxihuman-wasm/demo/pkg/oxihuman_wasm_bg.wasm | tee WASM_BYTES.txt
 
-      - name: Upload verified build outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: oxihuman-wasm-v0.2.1
-          if-no-files-found: error
-          retention-days: 7
-          path: |
-            crates/oxihuman-wasm/demo/pkg/oxihuman_wasm.js
-            crates/oxihuman-wasm/demo/pkg/oxihuman_wasm_bg.wasm
-            WASM_SHA256.txt
-            WASM_BYTES.txt
+          echo "=== CURRENT DIRECTORY ==="
+          pwd
+
+          echo "=== ALL GENERATED WASM FILES ==="
+          find . -type f -name "*.wasm" -print | sort
+
+          echo "=== ALL GENERATED JS FILES UNDER OXIHUMAN WASM ==="
+          find crates/oxihuman-wasm -type f -name "*.js" -print | sort
+
+          echo "=== REPORTED DEMO PKG ==="
+          find crates/oxihuman-wasm/demo/pkg -maxdepth 2 -type f -print | sort || true
+
+          echo "=== OTHER DEMO/PKG DIRECTORIES ==="
+          find . -type d \( -name pkg -o -name demo \) -print | sort
